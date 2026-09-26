@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}User Dashboard{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">AI Login Security</span>
+        <div class="ms-auto d-flex gap-2">
+            {% if user.is_admin %}
+                <a href="{{ url_for('admin') }}" class="btn btn-outline-primary btn-sm">Admin Dashboard</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+    {% if suspicious_activity %}
+        <div class="alert alert-warning" role="alert">
+            Suspicious login activity has been detected. Please review your recent login activity and verify your account details.
+        </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h3 class="mb-3">Welcome, {{ user.username }}</h3>
+                    <p class="text-muted mb-4">Your account security overview is below.</p>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <span class="text-muted d-block">Username</span>
+                                <strong>{{ user.username }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <span class="text-muted d-block">Email</span>
+                                <strong>{{ user.email }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <span class="text-muted d-block">Account Status</span>
+                                <strong>{{ user.account_status }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <span class="text-muted d-block">Failed Attempts</span>
+                                <strong>{{ user.failed_login_attempts }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <span class="text-muted d-block">Security Status</span>
+                                <strong>
+                                    {% if user.account_status == 'LOCKED' %}
+                                        <span class="badge bg-danger">Locked</span>
+                                    {% elif user.account_status == 'SUSPICIOUS' %}
+                                        <span class="badge bg-warning text-dark">Suspicious</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <span class="text-muted d-block">Last Login</span>
+                                <strong>{{ user.last_login or 'Not yet recorded' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Recent Login Activity</h5>
+                    {% if recent_activity %}
+                        <ul class="list-group list-group-flush mt-3">
+                            {% for item in recent_activity %}
+                                <li class="list-group-item px-0">
+                                    <small class="text-muted d-block">{{ item.attempt_time }}</small>
+                                    <span class="badge {% if item.success %}bg-success{% else %}bg-danger{% endif %} mb-1">
+                                        {{ 'Success' if item.success else 'Failed' }}
+                                    </span>
+                                    <div>{{ item.status }}</div>
+                                    {% if item.risk_level %}
+                                        <small class="text-muted">Risk: {{ item.risk_level }}</small>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted mt-3 mb-0">No recent activity yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

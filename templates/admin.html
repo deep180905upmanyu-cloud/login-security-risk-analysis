@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+    <div class="container">
+        <span class="navbar-brand mb-0 h1">Admin Panel</span>
+        <div class="ms-auto d-flex gap-2">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">User Dashboard</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger btn-sm">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4">
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="text-muted d-block">Total Users</span>
+                <strong>{{ summary.total_users }}</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="text-muted d-block">Successful Logins</span>
+                <strong>{{ summary.successful_logins }}</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="text-muted d-block">Failed Logins</span>
+                <strong>{{ summary.failed_logins }}</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="text-muted d-block">Locked Accounts</span>
+                <strong>{{ summary.locked_accounts }}</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="text-muted d-block">Suspicious Activities</span>
+                <strong>{{ summary.suspicious_activities }}</strong>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card">
+                <span class="text-muted d-block">Admin User</span>
+                <strong>{{ user.username }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3 gap-2">
+                <h4 class="mb-0">Login Activity</h4>
+                <div class="btn-group" role="group" aria-label="Login activity filters">
+                    {% set filters = [('all','All'), ('successful','Successful'), ('failed','Failed'), ('suspicious','Suspicious')] %}
+                    {% for key, label in filters %}
+                        <a href="{{ url_for('admin', filter=key) }}" class="btn btn-sm {% if current_filter == key %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ label }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Date/Time</th>
+                            <th>Status</th>
+                            <th>Failed Attempts</th>
+                            <th>Risk Level</th>
+                            <th>AI Reason</th>
+                            <th>Recommendation</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if recent_attempts %}
+                            {% for attempt in recent_attempts %}
+                                <tr>
+                                    <td>{{ attempt.username or 'Unknown' }}</td>
+                                    <td>{{ attempt.attempt_time }}</td>
+                                    <td>
+                                        {% if attempt.status == 'SUCCESS' %}
+                                            <span class="badge bg-success">Success</span>
+                                        {% elif attempt.status == 'LOCKED' or attempt.status == 'SUSPICIOUS' %}
+                                            <span class="badge bg-warning text-dark">{{ attempt.status }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ attempt.status or 'NORMAL' }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ attempt.failed_attempts or 0 }}</td>
+                                    <td>
+                                        {% if attempt.risk_level %}
+                                            <span class="badge {% if attempt.risk_level == 'HIGH' %}bg-danger{% elif attempt.risk_level == 'MEDIUM' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">{{ attempt.risk_level }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ attempt.risk_reason or 'N/A' }}</td>
+                                    <td>{{ attempt.recommendation or 'N/A' }}</td>
+                                    <td>
+                                        {% if attempt.status == 'LOCKED' and attempt.user_id %}
+                                            <form action="{{ url_for('unlock_user', user_id=attempt.user_id) }}" method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">Unlock</button>
+                                            </form>
+                                        {% else %}
+                                            <span class="text-muted small">—</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">No login attempts recorded yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
